@@ -2,37 +2,41 @@
 
 class Bot:
     def __init__(self):
+        self.commands = {
+            'echo': lambda args: self.say(' '.join(args[1:])),
+            'exit': self.exit,
+            'repeat': self.repeat,
+            'ping': self.ping,
+        }
         self.last_printed = None
         self.playing = None
-        self.commands = {
-            'exit': self.exit,
-            'ping': self.ping,
-            'echo': lambda args: self.say(' '.join(args[1:]))
-        }
 
     def say(self, text):
         self.last_printed = text
-        return 'say', text
+        return 'print', text
 
     def exit(self, args):
-        if len(args) == 1: return 'exit',
+        if len(args) == 1: 
+            return 'exit',
         return self.say(f"Command '{args[0]}' takes no arguments.")
 
     def ping(self, args):
-        if len(args) == 1: return self.say('pong!')
+        if len(args) == 1: 
+            return self.say('pong!')
         return self.say(f"Command '{args[0]}' takes no arguments.")
+
+    def repeat(self, args):
+        if len(args) > 1:
+            return self.say(f"Command '{args[0]}' takes no arguments.")
+        if self.last_printed is None:
+            return self.say('Nothing to repeat!')
+        return self.say(f'I said, {self.last_printed}')
 
     def handle(self, text):
         args = text.split()
-        if args[0] in self.commands:
-            return self.commands[args[0]](args)
-            
-        if text == 'repeat' and self.last_printed:
-            return 'print', f"I said, {self.last_printed}"
-        
-        if text == 'repeat':
-            self.last_printed = 'Nothing to repeat!'
-            return 'print', self.last_printed
+        func = self.commands.get(args[0])
+        if func:
+            return func(args)
 
         if args[0] == 'play' and self.playing is not None:
             self.last_printed = f'Already playing {self.playing}!'
@@ -72,7 +76,6 @@ def run_console():
         except Exception as e:
             print('[ERROR]', e)
             continue
-        print('[ACTION]', action, *args)
         if action == 'print':
             print(*args)
         if action == 'error':
