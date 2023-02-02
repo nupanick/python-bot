@@ -2,6 +2,7 @@
 
 class Bot:
     last_printed = None
+    playing = None
 
     def handle(self, text):
         # single-word commands
@@ -27,15 +28,44 @@ class Bot:
             self.last_printed = ' '.join(args)
             return 'print', self.last_printed
 
-        # bad command
+        if command == 'play' and self.playing is not None:
+            self.last_printed = f'Already playing {self.playing}!'
+            return 'print', self.last_printed
 
-        return 'error', f"Unknown command {command}"
+        if command == 'play' and args[0] == 'guess':
+            self.playing = 'guess'
+            self.guess_number = 69
+            self.last_printed = "Okay! I'm thinking of a number, guess with 'guess', or type 'give up'!"
+            return 'print', self.last_printed
+
+        # game-specific commands
+        if self.playing == 'guess' and command == 'guess':
+            guess = int(args[0])
+            if guess == self.guess_number:
+                self.playing = None
+                self.last_printed = 'You got it! Good game!'
+                return 'print', self.last_printed
+            else:
+                self.last_printed = 'Nope, try again!'
+                return 'print', self.last_printed
+
+        if self.playing == 'guess' and text == 'give up':
+            self.playing = None
+            self.last_printed = f"No worries! I was thinking of the number {self.guess_number}."
+            return 'print', self.last_printed
+
+        # bad command
+        return 'error', f"Unknown command {text}"
 
 def run_console():
     bot = Bot()
     while True:
         text = input('bot> ')
-        action, *args = bot.handle(text)
+        try:
+            action, *args = bot.handle(text)
+        except Exception as e:
+            print('[ERROR]', e)
+            continue
         if action == 'print':
             print(*args)
         if action == 'error':
