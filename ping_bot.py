@@ -1,16 +1,17 @@
 from lib import Bot
 
 class PingBot(Bot):
-    commands = ['ping']
-
-    def start(self):
-        yield from self.idle()
-
+    def main(self):
+        self.commands = {
+            'ping': self.ping
+        }
+        while True: 
+            yield from self.idle()
+        
     def idle(self):
         event = yield { 'listen': True }
         if event.get('command') == 'ping':
             yield from self.ping(event)
-        yield from self.idle()
 
     def ping(self, event):
         if len(event.get('args')) == 1:
