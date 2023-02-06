@@ -1,10 +1,15 @@
 class Bot:
+    commands = []
+
     def __init__(self):
-        self._gen = self.start()
+        self.generator = self.start() or self.idle()
         self.send()
+    
     def send(self, event=None):
-        self.act = self._gen.send(event)
-        return self.act
+        self.act = self.generator.send(event)
+    
     def start(self):
-        return NotImplemented
-    commands = NotImplemented
+        yield from self.idle()
+    
+    def idle(self):
+        yield from self.idle()

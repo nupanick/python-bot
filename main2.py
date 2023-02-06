@@ -3,33 +3,44 @@ from ping_bot import PingBot
 
 class MainBot(Bot):
     commands = ['echo', 'exit', 'repeat']
+    last_printed = None
+    apps = []
 
     def start(self):
-        self.last_printed = None
-        self.ping_bot = PingBot()
-        while True: yield from self.idle()
+        self.apps.append(PingBot())
+        yield from self.idle()
 
     def idle(self):
         event = yield { 'listen': True }
-        if 'command' not in event: 
-            return
-        if event['command'] in self.ping_bot.commands:
-            self.ping_bot.send(event)
-            if 'print' in self.ping_bot.act:
-                self.last_printed = self.ping_bot.act['print']
-            yield self.ping_bot.act
-            return
+        command = event.get('command')
+        if not command:
+            yield from self.idle()
+        # if command == 'echo': return self.echo(event)
+        # if command == 'exit': return self.exit()
+        # if command == 'repeat': return self.repeat()
+        for app in self.apps:
+            if command in app.commands:
+                app.send(event)
+                if 'print' in app.act:
+                    self.last_printed = app.act['print']
+                yield app.act
+                yield from self.idle()
+
         if event['command'] == 'echo':
             response = { 'print': event['text'] }
             self.last_printed = response['print']
             yield response
-            return
+            yield from self.idle()
+
         if event['command'] == 'exit':
             yield { 'exit': True }
-            return
+            yield from self.idle()
+
         if event['command'] == 'repeat':
             yield from self.repeat()
-            return
+            yield from self.idle()
+
+        yield from self.idle()
 
     def repeat(self):
         if not self.last_printed:
